@@ -25,9 +25,11 @@
         while (i < state.contents.length) {
           liTags =
             liTags +
+            // event.preventDefault하면 a태그를 클릭해도 새로운 페이지로 이동하지 않음
             `
                 <li>
-                    <a href="${state.contents[i].id}">${state.contents[i].title}</a>
+                    <a onclick="event.preventDefault(); let action = {type:'SELECT', id:${state.contents[i].id}} store.dispatch(action);"
+                    href="${state.contents[i].id}">${state.contents[i].title}</a>
                 </li>
             `;
           i += 1;
@@ -49,24 +51,43 @@
               `;
       }
       function article() {
+        let state = store.getState();
+        let i = 0;
+        let aTitle, aDesc;
+        while (i < state.contents.length) {
+          if (state.contents[i].id === state.selected_id) {
+            aTitle = state.contents[i].title;
+            aDesc = state.contents[i].desc;
+            break;
+          }
+          i += 1;
+        }
         document.querySelector("#content").innerHTML = `
               <article>
-                <h2>HTML</h2>
-                HTML is...
+                <h2>${aTitle}</h2>
+                ${aDesc}
               </article>
               `;
       }
       function reducer(state, action) {
         if (state === undefined) {
           return {
+            selected_id: null,
             contents: [
               { id: 1, title: "HTML", desc: "HTML is..." },
               { id: 2, title: "CSS", desc: "CSS is..." },
             ],
           };
         }
+        let newState;
+        if (action.type === "SELECT") {
+          newState = { ...state, selected_id: action.id };
+        }
+        console.log(action, state, newState);
+        return newState;
       }
       let store = Redux.createStore(reducer);
+      store.subscribe(article);
       subject();
       TOC();
       control();
