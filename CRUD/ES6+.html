@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.min.js"></script>
+  </head>
+  <body>
+    <!-- 함수화 해놓으면 재사용에 용이 -->
+    <div id="subject"></div>
+    <div id="toc"></div>
+    <div id="control"></div>
+    <div id="content"></div>
+    <script>
+      function subject() {
+        document.querySelector("#subject").innerHTML = `
+              <header>
+                <h1>WEB</h1>
+                hello, web!
+              </header>
+              `;
+      }
+
+      function TOC() {
+        let state = store.getState();
+        let i = 0;
+        let liTags = "";
+        while (i < state.contents.length) {
+          liTags =
+            liTags +
+            // event.preventDefault하면 a태그를 클릭해도 새로운 페이지로 이동하지 않음
+            `
+                <li>
+                    <a onclick="event.preventDefault(); let action = {type:'SELECT', id:${state.contents[i].id}} store.dispatch(action);"
+                    href="${state.contents[i].id}">${state.contents[i].title}</a>
+                </li>
+            `;
+          i += 1;
+        }
+        document.querySelector("#toc").innerHTML = `
+              <nav>
+                <ol>
+                   ${liTags}
+                </ol>
+              `;
+      }
+
+      function control() {
+        document.querySelector("#control").innerHTML = `
+              <ul>
+                <li><a onclick="event.preventDefault(); store.dispatch({type:'CHANGE_MODE', mode:'create'})" href="/create">create</a></li>
+                <li><input onclick="store.dispatch({type:"DELETE"});" type="button" value="delete"></input></li>
+              </ul>
+              `;
+      }
+
+      function article() {
+        let state = store.getState();
+        if (state.mode === "create") {
+          // this.title.value => this : 이 함수내의 name="title"인 것의 value: 입력값을 가져와라
+          document.querySelector("#content").innerHTML = `
+              <article>
+                <form onsubmit="event.preventDefault(); let _title = this.title.value; let _desc = this.desc.value;
+                    store.dispatch({type:'CREATE', title:_title, desc:_desc})
+                ">
+                    <p>
+                        <input type="text" name="title" placeholder="title">
+                    </p>
+                    <p>
+                        <textarea name="desc" placeholder="description"></textarea>
+                    </p>
+                    <p>
+                        <input type="submit">
+                    </p>
+                </form>
+              </article>
+              `;
+        } else if (state.mode === "read") {
+          let i = 0;
+          let aTitle, aDesc;
+          while (i < state.contents.length) {
+            if (state.contents[i].id === state.selected_id) {
+              aTitle = state.contents[i].title;
+              aDesc = state.contents[i].desc;
+              break;
+            }
+          }
+          i += 1;
+        }
+      }
+
+      function reducer(state, action) {
+        if (state === undefined) {
+          return {
+            max_id: 2,
+            mode: "create",
+            selected_id: 2,
+            contents: [
+              { id: 1, title: "HTML", desc: "HTML is..." },
+              { id: 2, title: "CSS", desc: "CSS is..." },
+            ],
+          };
+        }
+        let newState;
+        if (action.type === "SELECT") {
+          newState = { ...state, selected_id: action.id };
+        } else if (action.type === "CREATE") {
+          //contents가 배열이니까 concat로 복제
+          let newMaxId = store.max_id + 1;
+          let newContents = [
+            ...state.contents,
+            { id: newMaxId, title: action.title, desc: action.desc },
+          ];
+          newState =
+            ({ ...state },
+            { max_id: newMaxId, contents: newContents, mode: "read" });
+        } else if (action.type === "DELETE") {
+          let newContents = [];
+          let i = 0;
+          while (i < state.contents.length) {
+            if (state.selected_id === state.contents[i].id) {
+              newContents.push(state.contents[i]);
+              break;
+            }
+            i += 1;
+          }
+          newState = ({...state}, {contents:newContents, mode:'welcome'})
+        }
+        console.log(action, state, newState);
+        return newState;
+      }
+      let store = Redux.createStore(reducer);
+      store.subscribe(article);
+      store.subscribe(TOC);
+      subject();
+      TOC();
+      control();
+      article();
+    </script>
+  </body>
+</html>
