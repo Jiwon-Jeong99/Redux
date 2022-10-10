@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.min.js"></script>
-    </head>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.min.js"></script>
+  </head>
   <body>
     <style>
       .container {
@@ -11,24 +11,76 @@
       }
     </style>
     <div id="red"></div>
+    <div id="blue"></div>
+    <div id="green"></div>
+
     <script>
-        function
-        Redux.createStore(reducer);
+      //redux
+      function reducer(state, action) {
+        console.log(state, action);
+        if (state === undefined) {
+          //초기값을 위한 단계
+          return { color: "yellow" }; //store의 초기 state값
+        }
+        //state값을 변경하고 리턴하지 말고, 복제해서 변경해서 리턴하자
+        //각각의 state값들이 독립적으로 존재
+        let newState;
+        if (action.type === "CHANGE_COLOR") {
+          //{} 빈 객체에 state가 복사됨 -> 그 객체의 color:'red'
+          newState = Object.assign({}, state, { color: action.color });
+        }
+        console.log(action.type, action, state, newState);
+        return newState;
+      }
+      let store = Redux.createStore(
+        reducer,
+        window.__REDUX_DEVTOOLS_EXTENSION__ &&
+          window.__REDUX_DEVTOOLS_EXTENSION__()
+      );
+      console.log(store.getState());
 
       function red() {
+        let state = store.getState();
         document.querySelector("#red").innerHTML = `
-                <div class="container" id='component_red'>
+                <div class="container" id="component_red" style="background-color:${state.color}">
                     <h1>red</h1>
                     <input type='button' value='fire' onclick="
-                    document.querySelector('#component_red').style.backgroundColor = 'red';
-                    document.querySelector('#component_green').style.backgroundColor = 'red';
-                    document.querySelector('#component_blue').style.backgroundColor = 'red';
-                    document.querySelector('#component_orange').style.backgroundColor = 'red';
+                      store.dispatch({type:'CHANGE_COLOR', color:'red'});
                     ">    
                 </div>
               `;
       }
+      //state가 바뀔때마다 red 함수가 호출 (render)
+      store.subscribe(red);
       red();
+
+      function blue() {
+        let state = store.getState();
+        document.querySelector("#blue").innerHTML = `
+                <div class="container" id="component_blue" style="background-color:${state.color}">
+                    <h1>blue</h1>
+                    <input type='button' value='fire' onclick="
+                      store.dispatch({type:'CHANGE_COLOR', color:'blue'});
+                    ">    
+                </div>
+              `;
+      }
+      store.subscribe(blue);
+      blue();
+
+      function green() {
+        let state = store.getState();
+        document.querySelector("#green").innerHTML = `
+                <div class="container" id="component_green" style="background-color:${state.color}">
+                    <h1>green</h1>
+                    <input type='button' value='fire' onclick="
+                      store.dispatch({type:'CHANGE_COLOR', color:'green'});
+                    ">    
+                </div>
+              `;
+      }
+      store.subscribe(green);
+      green();
     </script>
   </body>
 </html>
